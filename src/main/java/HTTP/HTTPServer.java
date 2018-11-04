@@ -1,7 +1,9 @@
 package HTTP;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
@@ -10,28 +12,42 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
+
+import InvertedIndex.Processing;
 
 public class HTTPServer implements Runnable {
 	public static final int PORT = 8080;
 	private Socket connection;
-	private String header;
-	private String fileToRead;
-	private String method;
-	private String fileRequested;
+	public static Config configData;
+	private static Processing processed;
+
+	private HashMap<String, Handler> validPaths = new HashMap<>();
 	
-	public HTTPServer(Socket s) {
+	public HTTPServer(Socket s, HashMap<String, Handler> validPaths) {
 		connection = s;
+		this.validPaths = validPaths;
+	}
+	public HTTPServer() {
+		
 	}
 	
-	public static void main(String[] args) throws IOException {
+	public void startup() throws IOException {
+		ExecutorService executorService = Executors.newFixedThreadPool(5);
 		try(ServerSocket server = new ServerSocket(PORT);) {
-			System.out.println("Listening on POR : " + PORT);
+			System.out.println("Listening on PORT : " + PORT);
 			int c = 0;
 			while(true) {
-					HTTPServer client = new HTTPServer(server.accept());
+					HTTPServer client = new HTTPServer(server.accept(), this.validPaths);
 					System.out.println(c + " Connection opened @ " + new Date());
-					Thread t = new Thread(client);
-					t.start();
+					executorService.execute(client);
 					c++;
 			}
 		}
@@ -39,19 +55,44 @@ public class HTTPServer implements Runnable {
 
 	@Override
 	public void run() {
-		try(BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+		//InputStream in = connection.getInputStream();
+		
+		try(InputStream in = connection.getInputStream();
+				//BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 				PrintWriter out = new PrintWriter(connection.getOutputStream());
 				) {
+			String line;
 
-			String line = in.readLine(); 
-			getRequest(line);
-			System.out.println("METHOD : " + method + "\t FILEREQUESTED : " + fileRequested);
-			System.out.println("!!!!! REQUEST !!!!!");
+			if((line = oneLine(in)) == null) {
+			//if((line = in.readLine()) == null) {
+				return;
+			}
+			HTTPRequest request = new HTTPRequest(line, in, connection);
+
+			System.out.println("\n!!!!! REQUEST !!!!!");
+			request.getRequest();
+			request.getRequestBody();
+			System.out.println("!!!!!!");
 			
-			readRequest(line, in);
-			setResponse();
-			String httpResponse = header + '\t' + new Date().toString() + "\r\n\r\n" + readFile(fileToRead);
-			
+			HTTPResponse response = new HTTPResponse(request);
+			System.out.println("----->" + request.getRequestPath() + "<-----");
+			System.out.println(validPaths.keySet());
+			if (validPaths.containsKey(request.getRequestPath())) {
+				System.out.println("INSIDE");
+				Handler newHandler = validPaths.get(request.getRequestPath());
+				processed.getSizes();
+				newHandler.handle(request, response, processed);
+			}
+			else {
+				if(request.getRequestPath().equals("/")) {
+					response.setResponse(HTTPStatus.OK, "welcome.html");
+				}
+				else {
+					response.setResponse(HTTPStatus.ERROR, "error.html");
+				}
+			}
+
+			String httpResponse = response.getResponse() + "\n\r\n" + readFile(response.getFileToRead());
 			out.println(httpResponse);
 			
 			System.out.println("@@@@@ RESPONSE @@@@@\n" + httpResponse);
@@ -62,34 +103,25 @@ public class HTTPServer implements Runnable {
 		finally {
 			System.out.println("CLOSING CLIENT CONNECTION @ " + new Date() + "\n~~~~~~~~~~\n");
 		}
+	}
+	
+	public void buildInvertedIndex() {
+		try {
+			processed = new Processing(configData.getFiles().get(0), configData.getFiles().get(1), configData.getReadCount());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		processed.getSizes();
 		
 	}
 	
-	public void getRequest(String line) {
-		String[] split = line.split(" ");
-		method = split[0];
-		fileRequested = split[1];
+	public void addMapping(String path, Handler handler) {
+		validPaths.put(path, handler);
 	}
 	
-	public void setResponse() {
-		if (!(method.equals("GET") || method.equals("POST"))) {
-			header = "HTTP/1.1 405 METHOD NOT ALLOWED";
-			fileToRead = "error.html";
-		}
-		else {
-			header = "HTTP/1.1 200 OK";
-			fileToRead = "index.html";
-		}
-	}
-	
-	public void readRequest(String line, BufferedReader in) {
-		while (!line.isEmpty()) { 
-			System.out.println(line); 
-			try {
-				line = in.readLine();
-			} catch (IOException e) {
-				System.out.println("IO Exception");
-			}
+	public void displayMap() {
+		for(Map.Entry<String, Handler> item : validPaths.entrySet()) {
+			System.out.println(item.getKey() + '\t' + item.getValue());
 		}
 	}
 	
@@ -104,5 +136,46 @@ public class HTTPServer implements Runnable {
 			System.out.println("IO Exception!");
 		}		
 		return fileData;
+	}
+	
+	public void readConfig(String cFile) {
+		Gson gson = new GsonBuilder().create();
+		try {
+		BufferedReader f = Files.newBufferedReader(Paths.get(cFile));
+		configData = gson.fromJson(f, Config.class);
+		System.out.println(configData.toString() + '\n');
+		//LogData.log.info(configData.toString());
+		}
+		catch (IOException | NullPointerException i) {
+			//LogData.log.warning("NO SUCH FILE");
+			System.out.println("NO SUCH FILE");
+			System.exit(1);
+		}
+		catch (JsonSyntaxException i) {
+			//LogData.log.warning("NO SUCH FILE");
+		}		
+	}
+	
+	private static String oneLine(InputStream instream) {
+		//ByteArrayOutputStream bout;
+		String line = null;
+		byte b;
+		try(ByteArrayOutputStream bout = new ByteArrayOutputStream();) {
+			b = (byte) instream.read();
+			while(b != '\n' && b != -1) {
+				bout.write(b);
+				bout.flush();
+				b = (byte) instream.read();
+			}
+			line = new String(bout.toByteArray());
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			System.out.println("SOME ERROR!!!");
+		}
+	
+
+		//System.out.println(new String(bout.toByteArray()));
+		return line;
 	}
 }
