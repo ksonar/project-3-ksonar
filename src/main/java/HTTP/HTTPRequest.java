@@ -1,62 +1,63 @@
 package HTTP;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
-import java.util.ArrayList;
 
+/*
+ * Process request and set desired fields
+ * @author ksonar
+ */
 public class HTTPRequest {
-	private String line;
 	private String requestType;
 	private String[] fullPath;
 	private String fullQuery;
 	private String path;
 	private String HTTP;
-	String headers = "";
-	// BufferedReader in
+	private int length = 0;
+	private String headers = "";
+	private String msg;
+
 	public HTTPRequest(String line, InputStream in, Socket connection) throws IOException {
-		this.line = line;
 		System.out.println("LINE FROM WITHIN REQUEST : " + line);
 
 		setRequest(line);
 		setRequestHeaders(line, in, connection);
 	}
-	
+	//getters
+	public int getLength() { return length; }
 	public String getRequestType() { return requestType; }
 	public String getRequestPath() { return path; }
 	public String[] getRequestFullPath() { return fullPath; }
 	public String getRequestFullQuery() { return fullQuery; }
 	public void getRequest() { 
-		if(fullPath.length > 1)
-			System.out.println(requestType + " " + path + " " + fullQuery.toString() + " " + HTTP);
-		else
-			System.out.println(requestType + " " + path + " " + HTTP);
-		}
-	public void getRequestBody() { System.out.println(headers);}
-	
+		System.out.println(requestType + " " + path + " " + msg + " " + HTTP + '\n' + headers);
+	}
+
+	/*
+	 * Set the first header line (METHOD,API,HTTP)
+	 * @params line
+	 */
 	public void setRequest(String line) {
-		System.out.println("---->" + line);
 		String[] split = line.split(" ");
 		if (split.length != 3) {
-			System.out.println("Invalid request length, follow protocol");
+			LogData.log.warning("Invalid request length, follow protocol");
 			System.exit(1);
 		}
 		requestType = split[0];
 		fullPath = split[1].split("\\?");
 		path = fullPath[0];
-		if(fullPath.length > 1) {
-			fullQuery = fullPath[1];
-		}
 		HTTP = split[2];
 	}
-	//BufferedReader in
+	
+	/*
+	 * Set all remaining headers
+	 * @params line, in, connection
+	 */
 	public void setRequestHeaders(String line, InputStream in, Socket connection) throws IOException {
-		int length = 0;
-		while (!line.trim().isEmpty()) { 
+		while (line != null && !line.trim().isEmpty()) { 
 			try {
-				//line = in.readLine();
 				line = oneLine(in);
 				if(line.startsWith("Content-Length:")) {
 					length = Integer.parseInt(line.split(":")[1].trim());
@@ -67,22 +68,31 @@ public class HTTPRequest {
 				System.out.println("IO Exception");
 			}
 		}
+		
 		byte[] bytes = new byte[length];
 		int read = connection.getInputStream().read(bytes);
 		
 		while(read < length) {
 			read += connection.getInputStream().read(bytes, read, (bytes.length-read));
 		}
-		
-		System.out.println("Bytes expected: " + length + " Bytes read: " + read);			
-		
-		
+		LogData.log.info("REQUEST BODY READ, Bytes expected: " + length + " Bytes read: " + read);
+
+		msg = new String(bytes);
+		headers+= msg;
+		if(requestType.equals("POST")) {
+			fullQuery = msg;
+		}
+		LogData.log.info("METHOD : " + requestType + "\tAPI : " + path + "\tQUERY : " + fullQuery + "\tHTTP : " + HTTP);
 	}
 	
+	/*
+	 * Read data from incoming client request
+	 * @instream
+	 */
 	private static String oneLine(InputStream instream) throws IOException {
 		ByteArrayOutputStream bout = new ByteArrayOutputStream();
 		byte b = (byte) instream.read();
-		while(b != '\n') {
+		while(b != -1 && b != '\n') {
 			bout.write(b);
 			b = (byte) instream.read();
 		}

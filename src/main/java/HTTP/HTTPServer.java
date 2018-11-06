@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -13,7 +12,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -23,11 +21,19 @@ import com.google.gson.JsonSyntaxException;
 
 import InvertedIndex.Processing;
 
-public class HTTPServer implements Runnable {
+/*
+ * Mutlithreaded HTTPServer that services incoming requests with responses.
+ * @author ksonar
+ */
+public class HTTPServer extends HTML implements Runnable {
 	public static final int PORT = 8080;
 	private Socket connection;
 	public static Config configData;
-	private static Processing processed;
+	public static Processing processed;
+	
+	private HTTPResponse response;
+	private HTTPRequest request;
+	private String httpResponse;
 
 	private HashMap<String, Handler> validPaths = new HashMap<>();
 	
@@ -36,55 +42,61 @@ public class HTTPServer implements Runnable {
 		this.validPaths = validPaths;
 	}
 	public HTTPServer() {
-		
 	}
 	
-	public void startup() throws IOException {
+	/*
+	 * Get valid paths/handlers
+	 */
+	public String getValidPaths() { return validPaths.toString(); }
+	
+	public void startup() {
 		ExecutorService executorService = Executors.newFixedThreadPool(5);
-		try(ServerSocket server = new ServerSocket(PORT);) {
+		try(ServerSocket server = new ServerSocket(configData.getPort());) {
+			LogData.log.info("SERVER STARTED\n<<<<<<<>>>>>>>");
 			System.out.println("Listening on PORT : " + PORT);
 			int c = 0;
 			while(true) {
 					HTTPServer client = new HTTPServer(server.accept(), this.validPaths);
+					LogData.log.info(c + " Connection opened @ " + new Date());
 					System.out.println(c + " Connection opened @ " + new Date());
 					executorService.execute(client);
 					c++;
 			}
+		} catch (IOException e) {
+			LogData.log.warning("STARTUP PROBLEM while creating server/client connection");
 		}
 	}
-
+	/*
+	 * Will service incoming request and render appropriate data
+	 * @see java.lang.Runnable#run()
+	 */
 	@Override
 	public void run() {
-		//InputStream in = connection.getInputStream();
-		
 		try(InputStream in = connection.getInputStream();
-				//BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-				PrintWriter out = new PrintWriter(connection.getOutputStream());
+			PrintWriter out = new PrintWriter(connection.getOutputStream());
 				) {
-			String line;
-
-			if((line = oneLine(in)) == null) {
-			//if((line = in.readLine()) == null) {
+			String line = oneLine(in).trim();
+			if(line.equals("")) {
+				System.out.println("Returning");
 				return;
 			}
-			HTTPRequest request = new HTTPRequest(line, in, connection);
-
-			System.out.println("\n!!!!! REQUEST !!!!!");
-			request.getRequest();
-			request.getRequestBody();
-			System.out.println("!!!!!!");
+			request = new HTTPRequest(line, in, connection);
 			
-			HTTPResponse response = new HTTPResponse(request);
-			System.out.println("----->" + request.getRequestPath() + "<-----");
-			System.out.println(validPaths.keySet());
+			response = new HTTPResponse(request);
+			
+			if(response.getResponse().equals(HTTPStatus.NOT_ALLOWED)) {
+				sendResponse(out);
+				return;
+			}
+
 			if (validPaths.containsKey(request.getRequestPath())) {
-				System.out.println("INSIDE");
 				Handler newHandler = validPaths.get(request.getRequestPath());
-				processed.getSizes();
-				newHandler.handle(request, response, processed);
+				newHandler.handle(request, response);
+				LogData.log.info("HANDLING DONE");
 			}
 			else {
-				if(request.getRequestPath().equals("/")) {
+				if(request.getRequestPath().equals("/") && (request.getRequestType().equals("GET"))) {
+					setupHTML("welcome.html",validPaths.keySet().toString());
 					response.setResponse(HTTPStatus.OK, "welcome.html");
 				}
 				else {
@@ -92,39 +104,43 @@ public class HTTPServer implements Runnable {
 				}
 			}
 
-			String httpResponse = response.getResponse() + "\n\r\n" + readFile(response.getFileToRead());
-			out.println(httpResponse);
-			
-			System.out.println("@@@@@ RESPONSE @@@@@\n" + httpResponse);
+			sendResponse(out);			
 			
 		} catch (IOException e) {
 			System.out.println("IO Exception");
+			LogData.log.warning("IO ERROR in client connection");
 		}
 		finally {
 			System.out.println("CLOSING CLIENT CONNECTION @ " + new Date() + "\n~~~~~~~~~~\n");
+			LogData.log.info("CLOSING CLIENT CONNECTION @ " + new Date() + "\n~~~~~~~~~~\n");
 		}
 	}
 	
+	/*
+	 * Build a static InvertedIndex, to be accessed for Find and Review Handler
+	 */
 	public void buildInvertedIndex() {
 		try {
 			processed = new Processing(configData.getFiles().get(0), configData.getFiles().get(1), configData.getReadCount());
 		} catch (IOException e) {
-			e.printStackTrace();
+			LogData.log.warning("FILE NOT FOUND");
 		}
-		processed.getSizes();
+		LogData.log.info("INVERTED INDEX BUILT SIZE : " + processed.getSizes());
 		
 	}
 	
+	/*
+	 * Add APIs and handler of specific application
+	 * @params path, handler
+	 */
 	public void addMapping(String path, Handler handler) {
 		validPaths.put(path, handler);
 	}
 	
-	public void displayMap() {
-		for(Map.Entry<String, Handler> item : validPaths.entrySet()) {
-			System.out.println(item.getKey() + '\t' + item.getValue());
-		}
-	}
-	
+	/*
+	 * Read required HTML page
+	 * @params file
+	 */
 	public String readFile(String file) {
 		String line;
 		String fileData = "";
@@ -133,31 +149,36 @@ public class HTTPServer implements Runnable {
 				fileData += line;
 			}
 		} catch (IOException e) {
-			System.out.println("IO Exception!");
+			LogData.log.warning("INCORRECT HTML PAGE");
 		}		
 		return fileData;
 	}
-	
+	/*
+	 * Read from config file
+	 * @params cFile
+	 */
 	public void readConfig(String cFile) {
 		Gson gson = new GsonBuilder().create();
 		try {
 		BufferedReader f = Files.newBufferedReader(Paths.get(cFile));
 		configData = gson.fromJson(f, Config.class);
 		System.out.println(configData.toString() + '\n');
-		//LogData.log.info(configData.toString());
+		LogData.log.info(configData.toString());
 		}
 		catch (IOException | NullPointerException i) {
-			//LogData.log.warning("NO SUCH FILE");
+			LogData.log.warning("NO SUCH FILE");
 			System.out.println("NO SUCH FILE");
 			System.exit(1);
 		}
 		catch (JsonSyntaxException i) {
-			//LogData.log.warning("NO SUCH FILE");
+			LogData.log.warning("JSON EXCEPTION");
 		}		
 	}
-	
+	/*
+	 * Read byte-data from incoming client request 
+	 * @params instream
+	 */
 	private static String oneLine(InputStream instream) {
-		//ByteArrayOutputStream bout;
 		String line = null;
 		byte b;
 		try(ByteArrayOutputStream bout = new ByteArrayOutputStream();) {
@@ -170,12 +191,19 @@ public class HTTPServer implements Runnable {
 			line = new String(bout.toByteArray());
 			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			System.out.println("SOME ERROR!!!");
+			System.out.println("IO ERROR!!!");
+			LogData.log.warning("IO ERROR!!");
 		}
-	
-
-		//System.out.println(new String(bout.toByteArray()));
 		return line;
+	}
+	/*
+	 * Send response to client's output stream
+	 * @params out
+	 */
+	public void sendResponse(PrintWriter out) {
+		LogData.log.info("RESPONSE SET");
+
+		httpResponse = response.getResponse() + "\n\r\n" + readFile(response.getFileToRead());
+		out.write(httpResponse);
 	}
 }

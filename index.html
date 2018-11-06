@@ -6,11 +6,11 @@
 	<body>
 		<p><b>WELCOME TO INDEX PAGE</b></p>
 		<p>Just a test message!</p>
-		<form  action = "http://localhost:8080/reviewsearch" method = "post">
-		  ReviewSearch:<br>
+		<form  action = "http://localhost:8080/reviewsearch" method = "post" id = "form1">
+		  ReviewSearch<br>
 		  <input type="text" name="search" value=""><br>
-		  <input type="submit" value="Submit" >
-	</form>
+		</form>
+		<button type="submit" form="form1" value="Submit">Submit</button>
 	</body>
 </html>
 

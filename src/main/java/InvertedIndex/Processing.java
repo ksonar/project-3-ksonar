@@ -24,7 +24,7 @@ public class Processing {
 	private InvertedIndex i1 = new InvertedIndex();
 	private InvertedIndex i2 = new InvertedIndex();
 	
-	public void getSizes() { System.out.print(i1.getSize()); }
+	public int getSizes() { return i1.getSize()+i2.getSize(); }
 
 	
 	/*
@@ -99,10 +99,10 @@ public class Processing {
 		String output = "";
 		System.out.println(operation + '\t' + term.toUpperCase() + "####");
 		switch(operation) {
-			case "search":
+			case "query":
 				output = i1.search(term);
 				break;
-			case "find":
+			case "asin":
 				output = "~~~Records from Review objects~~~\n\n" + i1.findAsin(term.toUpperCase() + "\n\n") ;
 				output += "~~~Records from QA objects~~~\n\n" + i2.findAsin(term.toUpperCase() + "\n\n");
 		}

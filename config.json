@@ -1,0 +1,6 @@
+{
+	'files' : ['reviews.json','QA.json'],
+	'readCount' : 10000,
+	'appName' : 'InvertedIndex',
+	'port' : 8080
+}
