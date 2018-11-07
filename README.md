@@ -1,9 +1,9 @@
 Project 3 - HTTP Server
-=======================================
+### =======================================
 Steps to run JAVA Application
-1. Pass file as argument parameter
+1. Pass config file as argument parameter
 2. Values for appName : [InvertedIndex/Slackbot] (config.json)    
-=======================================
+### =======================================
 ### Due - Wednesday, November 7, 2018 - 11am
 
 For this project, you will implement an HTTP server, two web applications, and a full suite of tests. You will practice using the following:
