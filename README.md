@@ -1,7 +1,7 @@
 Project 3 - HTTP Server
 =======================================
 1. 8080 - InvertedIndex
-2. 9090 - Slack
+2. 9090 - Slack  
 =======================================
 ### Due - Wednesday, November 7, 2018 - 11am
 
