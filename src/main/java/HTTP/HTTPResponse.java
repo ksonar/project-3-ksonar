@@ -24,7 +24,6 @@ public class HTTPResponse {
 			response = HTTPStatus.NOT_ALLOWED;
 			fileToRead = "not_allowed.html";
 		}
-		
 		else {
 			response = HTTPStatus.OK;
 			fileToRead = "index.html";			

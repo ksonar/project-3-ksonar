@@ -47,6 +47,11 @@ public class HTTPRequest {
 		fullPath = split[1].split("\\?");
 		path = fullPath[0];
 		HTTP = split[2];
+		if(requestType.equals("POST")) {
+			fullQuery = msg;
+		}
+		
+		LogData.log.info("METHOD : " + requestType + "\tAPI : " + path + "\tQUERY : " + fullQuery + "\tHTTP : " + HTTP);
 	}
 	
 	/*

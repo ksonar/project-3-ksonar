@@ -2,34 +2,66 @@ package src.test;
 
 import HTTP.*;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 
 import javax.net.ssl.HttpsURLConnection;
 
+import org.junit.*;
+
 
 public class Testing {
-	public static final int PORT = 1024;
+	private static int PORT;
 	private static HTTPServer server;
 	
-	public static void main(String[] args) {
-		if(args.length != 1) {
-			System.out.println("INVALID ARGUMENT LENGTH, MUST CONTAIN 1 CONIFG FILE");
-			LogData.log.warning("INVALID ARGUMENT LENGTH, MUST CONTAIN 1 CONIFG FILE");
-			System.exit(1);
-		}
-		String cFile = args[0];
+	@BeforeClass
+	public static void set() throws SecurityException, IOException {
+		LogData.createLogger();
+		HTTPServer server = new HTTPServer();
+		String cFile = "config.json";
 		build(cFile);
-		server.startup();
+		PORT = HTTPServer.configData.getPort();
+		System.out.println("STARTING");
+		//server.startup();
+	}
+	
+	@Test
+	public void checkSetRequest() {
+		//HTTPRequest request = new HTTPRequest();
+	}
+	
+	@Test
+	public void sendSlackMessage() {
+		ChatHandler slackAPI = new ChatHandler();
+		
+	}
+	
+	
+	@Test
+	public void testLandingPage() {
+
 		try {
 			URL url = new URL("http://localhost:" + PORT);
-		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
+			con.setRequestMethod("GET");
+			System.out.println("HERE");
+			BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+			String inputLine;
+			StringBuffer message = new StringBuffer();
+
+			while ((inputLine = in.readLine()) != null) {
+				message.append(inputLine);
+			}
+			in.close();
+			System.out.println(message.toString());
+			System.out.println("\n\n" + "URL: " + url + " CODE : " + con.getResponseCode() + " MSG : " + con.getResponseMessage());
+			
+		} catch (IOException e) {
+			System.out.println("MALFORMED");
 		}
-		
-		//HttpsURLConnection con = (HttpsURLConnection) obj.openConnection();
 		
 	}
 	
@@ -51,6 +83,7 @@ public class Testing {
 		else {
 			server.addMapping("/slackbot", new ChatHandler());
 		}
+		
 		System.out.println(server.getValidPaths());
 		LogData.log.info(server.getValidPaths());
 	}

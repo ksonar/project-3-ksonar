@@ -18,7 +18,6 @@ public class ChatHandler extends HTML implements Handler {
 	 */
 	@Override
 	public void handle(HTTPRequest request, HTTPResponse response) {
-		System.out.println("!!!" + request.getRequestFullQuery() + "!!!");
 		if((request.getRequestFullQuery() != null) && request.getRequestType().equals("POST")) {
 			output = getOutput(request.getRequestFullQuery(), match);
 			boolean check = check(output, response);
@@ -29,7 +28,7 @@ public class ChatHandler extends HTML implements Handler {
 					obj = new URL(url);
 					HttpsURLConnection con = (HttpsURLConnection) obj.openConnection();
 					setMethodRequest(con);
-					String json = "{\"channel\":\"testing_kunal\",\"text\":\"" + output + "\"}";
+					String json = "{\"channel\":\"project3\",\"text\":\"" + output + "\"}";
 					con.setDoOutput(true);
 					con.getOutputStream().write(json.getBytes());
 					

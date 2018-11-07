@@ -22,17 +22,26 @@ public class HTML  {
 	try(FileWriter f = new FileWriter(fileToWrite);
 		BufferedWriter b = new BufferedWriter(f);) {
 			b.write(start);
-			if(!fileToWrite.equals("slackOutput.html")) {
+			if(fileToWrite.equals("output.html")) {
+				if(output.equals("-1") || output.equals("-1-1")) {
+					b.write("Data for query does not exist!");
+					return;
+				}
+				
 				lineByLine = output.split("<<>>");
-				b.write("<p>" + lineByLine.length + "</p>");
-				String tableHead = "<h2>Results</h2><table style=\"width:100%\"><tr><th>#</th><th>ASIN</th><th>REVIEWER ID</th><th>TEXT</th><th>SCORE</th></tr>";
+				b.write("<p>" + "#Records : " + lineByLine.length + "</p>");
+				String tableHead = "<h2>Results</h2><style>table, th, td {border: 2px solid black;}</style><table style=\"width:100%\"><tr><th>#</th><th>ASIN</th><th>REVIEWER ID</th><th>TEXT</th><th>SCORE</th></tr>";
+				
 				b.write(tableHead);
 				for(String line : lineByLine) {
+					if(line.equals("-1")) {
+						return;
+					}
 					String[] objData = line.split("\t");
 					b.write("<tr>");
 					for(String obj : objData) {
-						String data = obj.split(":")[1].trim();
-						b.write("<td>" + data + "</td>");
+							String data = obj.split(":")[1].trim();
+							b.write("<td>" + data + "</td>");
 					}
 					b.write("</tr>");
 				}
@@ -44,7 +53,7 @@ public class HTML  {
 			}
 			b.write(end);	
 	} catch (IOException e) {
-		e.printStackTrace();
+		LogData.log.warning("ISSUE WITH OUTPUT DATA");
 		}
 	}
 	
@@ -54,7 +63,6 @@ public class HTML  {
 	 */
 	public String getOutput(String text, String match) {
 		String output;
-		System.out.println(text);
 		try {
 			text = text.split(match+"\\=")[1].replaceAll("\\+", " ");
 			LogData.log.info(match + " : " + text);
@@ -78,13 +86,21 @@ public class HTML  {
 		response.setResponse(HTTPStatus.OK, "output.html");
 	}
 	/*
+	 * Setup HTML and set response
+	 * @params response
+	 */
+	public void setup(HTTPResponse response, String file) {
+		setupHTML(file, output);
+		response.setResponse(HTTPStatus.OK, file);
+	}
+	/*
 	 * Check if output string is valid to post to the slack API
 	 * @params output, response
 	 */
 	public boolean check(String output, HTTPResponse response) {
 		this.output = output;
 		if(output.equals("INVALID QUERY REQUEST")) {
-			setup(response);
+			setup(response, "slackOutput.html");
 			return false;
 		}
 		else {

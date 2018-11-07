@@ -124,7 +124,6 @@ public class InvertedIndex {
 	
 	public String findAsin (String asin) {
 		asin = asin.trim();
-		System.out.println("\n@@@@" + asin + '!' + asinIndex.size());
 		StringBuffer sb = new StringBuffer();
 		int count = 1;
 		Boolean check = false;
@@ -136,7 +135,7 @@ public class InvertedIndex {
 			}
 		}
 		if(check == false) {
-			sb.append("Data does not exist\n\n");
+			sb.append("-1");
 		}
 		return sb.toString();	
 	}
@@ -147,7 +146,6 @@ public class InvertedIndex {
 	 */
 	
 	public String search (String term) {
-		System.out.println("ENTERED");
 		StringBuffer sb = new StringBuffer();
 		Boolean check = false;
 		int count = 1;
@@ -161,8 +159,7 @@ public class InvertedIndex {
 			}
 		}
 		if(check == false) {
-			//System.out.println("Data for key does not exist");
-			sb.append("Data for key does not exist\n");
+			sb.append("-1");
 		}
 		return sb.toString();	
 	}

@@ -27,10 +27,9 @@ import InvertedIndex.Processing;
  */
 public class HTTPServer extends HTML implements Runnable {
 	public static int PORT;
-	private Socket connection;
 	public static Config configData;
 	public static Processing processed;
-	
+	private Socket connection;
 	private HTTPResponse response;
 	private HTTPRequest request;
 	private String httpResponse;
@@ -41,11 +40,8 @@ public class HTTPServer extends HTML implements Runnable {
 		connection = s;
 		this.validPaths = validPaths;
 	}
-	public HTTPServer() {
 
-	}
-	
-
+	public HTTPServer() {}
 	
 	/*
 	 * Get valid paths/handlers
@@ -98,7 +94,7 @@ public class HTTPServer extends HTML implements Runnable {
 				LogData.log.info("HANDLING DONE");
 			}
 			else {
-				if(request.getRequestPath().equals("/") && (request.getRequestType().equals("GET"))) {
+				if(request.getRequestPath().equals("/") && (!response.getResponse().equals(HTTPStatus.NOT_ALLOWED))) {
 					setupHTML("welcome.html",validPaths.keySet().toString());
 					response.setResponse(HTTPStatus.OK, "welcome.html");
 				}
@@ -106,7 +102,6 @@ public class HTTPServer extends HTML implements Runnable {
 					response.setResponse(HTTPStatus.ERROR, "error.html");
 				}
 			}
-
 			sendResponse(out);			
 			
 		} catch (IOException e) {
@@ -117,8 +112,7 @@ public class HTTPServer extends HTML implements Runnable {
 			System.out.println("CLOSING CLIENT CONNECTION @ " + new Date() + "\n~~~~~~~~~~\n");
 			LogData.log.info("CLOSING CLIENT CONNECTION @ " + new Date() + "\n~~~~~~~~~~\n");
 		}
-	}
-	
+	}	
 	/*
 	 * Build a static InvertedIndex, to be accessed for Find and Review Handler
 	 */
@@ -139,7 +133,7 @@ public class HTTPServer extends HTML implements Runnable {
 	public void addMapping(String path, Handler handler) {
 		validPaths.put(path, handler);
 	}
-	
+		
 	/*
 	 * Read required HTML page
 	 * @params file
@@ -167,6 +161,7 @@ public class HTTPServer extends HTML implements Runnable {
 		configData = gson.fromJson(f, Config.class);
 		System.out.println(configData.toString() + '\n');
 		LogData.log.info(configData.toString());
+		HTTPServer.PORT = configData.getPort();
 		}
 		catch (IOException | NullPointerException i) {
 			LogData.log.warning("NO SUCH FILE");
@@ -176,7 +171,7 @@ public class HTTPServer extends HTML implements Runnable {
 		catch (JsonSyntaxException i) {
 			LogData.log.warning("JSON EXCEPTION");
 		}	
-		HTTPServer.PORT = configData.getPort();
+
 	}
 	/*
 	 * Read byte-data from incoming client request 

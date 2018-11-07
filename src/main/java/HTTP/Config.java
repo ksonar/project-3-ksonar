@@ -30,15 +30,7 @@ public class Config {
 	public String toString() { 
 		return files + "\t" + readCount + '\t' + appName + '\t' + port ;
 	}
-	
-	public static Config getConfig(String cFile) {
-		if (configData == null) {
-			readConfig(cFile);
-		}
-		return configData;
-		
-	}
-	
+
 	/*
 	 * Read from config file
 	 * @params cFile
@@ -53,7 +45,6 @@ public class Config {
 		}
 		catch (IOException | NullPointerException i) {
 			LogData.log.warning("NO SUCH FILE");
-			System.out.println("NO SUCH FILE");
 			System.exit(1);
 		}
 		catch (JsonSyntaxException i) {

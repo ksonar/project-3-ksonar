@@ -5,7 +5,7 @@ package HTTP;
  * @author ksonar
  */
 public class ReviewSearchHandler extends HTML implements Handler {
-	private String output;
+	private String output = "";
 	private String match = "query";
 	private String text;
 	/*
@@ -14,10 +14,16 @@ public class ReviewSearchHandler extends HTML implements Handler {
 	 */
 	@Override
 	public void handle(HTTPRequest request, HTTPResponse response) {
+		
 		if(request.getRequestFullQuery() != null && request.getRequestType().equals("POST")) {
 			text = getOutput(request.getRequestFullQuery(), match);
 			LogData.log.info(match + " : " + text);
-			output = HTTPServer.processed.getData(match, text);
+			String data = "";
+			for(String search : text.split(" ")) {
+				System.out.println(search);
+				data += HTTPServer.processed.getData(match, search);
+			}
+			output = data;
 			setup(response);
 		}
 		else if(request.getRequestFullQuery() == null && request.getRequestType().equals("POST")) {
@@ -28,7 +34,6 @@ public class ReviewSearchHandler extends HTML implements Handler {
 		else {
 			response.setResponse(HTTPStatus.OK, "review.html");
 		}
-
 	}
 	
 	/*
