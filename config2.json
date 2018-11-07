@@ -1,6 +1,6 @@
 {
 	'files' : ['reviews.json','QA.json'],
-	'readCount' : 10000,
+	'readCount' : 10000, 
 	'appName' : 'Slackbot',
 	'port' : 8080
 }
