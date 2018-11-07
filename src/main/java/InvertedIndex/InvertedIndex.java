@@ -131,14 +131,12 @@ public class InvertedIndex {
 		if(asinIndex.containsKey(asin)) {
 			check = true;
 			for(Data arr : asinIndex.get(asin)) {
-				sb.append(count + "." + arr + "\n\n");
-				System.out.println(count + "." + arr + '\n');
+				sb.append("COUNT : " + count + "\t" + arr + "\n\n");
 				count++;
 			}
 		}
 		if(check == false) {
 			sb.append("Data does not exist\n\n");
-			//System.out.println("Data does not exist");
 		}
 		return sb.toString();	
 	}
@@ -157,8 +155,7 @@ public class InvertedIndex {
 			if(item.getKey().equals(term)) {
 				check = true;
 				for(MetaData d : item.getValue()) {
-					sb.append(count + "." + d + "\n\n");
-					//System.out.println(count + "." + d + "\n");
+					sb.append("COUNT : " + count + "\t" + d + "\n\n");
 					count++;
 				}
 			}

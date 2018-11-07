@@ -26,7 +26,7 @@ import InvertedIndex.Processing;
  * @author ksonar
  */
 public class HTTPServer extends HTML implements Runnable {
-	public static final int PORT = 8080;
+	public static int PORT;
 	private Socket connection;
 	public static Config configData;
 	public static Processing processed;
@@ -42,7 +42,10 @@ public class HTTPServer extends HTML implements Runnable {
 		this.validPaths = validPaths;
 	}
 	public HTTPServer() {
+
 	}
+	
+
 	
 	/*
 	 * Get valid paths/handlers
@@ -51,7 +54,7 @@ public class HTTPServer extends HTML implements Runnable {
 	
 	public void startup() {
 		ExecutorService executorService = Executors.newFixedThreadPool(5);
-		try(ServerSocket server = new ServerSocket(configData.getPort());) {
+		try(ServerSocket server = new ServerSocket(PORT);) {
 			LogData.log.info("SERVER STARTED\n<<<<<<<>>>>>>>");
 			System.out.println("Listening on PORT : " + PORT);
 			int c = 0;
@@ -172,7 +175,8 @@ public class HTTPServer extends HTML implements Runnable {
 		}
 		catch (JsonSyntaxException i) {
 			LogData.log.warning("JSON EXCEPTION");
-		}		
+		}	
+		HTTPServer.PORT = configData.getPort();
 	}
 	/*
 	 * Read byte-data from incoming client request 

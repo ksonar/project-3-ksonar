@@ -6,7 +6,7 @@ import java.io.IOException;
  * @author ksonar
  */
 public class SomeApplication {
-
+	
 	public static void main(String[] args) throws SecurityException, IOException {
 		LogData.createLogger();
 		HTTPServer server = new HTTPServer();
@@ -21,7 +21,6 @@ public class SomeApplication {
 		
 		server.readConfig(cFile);
 		
-		
 		if(HTTPServer.configData.getAppName().equals("InvertedIndex")) {
 			server.addMapping("/reviewsearch", new ReviewSearchHandler());
 			server.addMapping("/find", new FindHandler());
@@ -34,7 +33,6 @@ public class SomeApplication {
 		LogData.log.info(server.getValidPaths());
 		
 		server.startup();
-		
 	}
 
 }

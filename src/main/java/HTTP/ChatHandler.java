@@ -45,8 +45,8 @@ public class ChatHandler extends HTML implements Handler {
 					in.close();
 					output = "<H1>RESPONSE FROM SLACK</H1>" + message.toString();
 					LogData.log.info(message.toString());
-					setupHTML("output.html", output);
-					response.setResponse(HTTPStatus.OK, "output.html");
+					setupHTML("slackOutput.html", output);
+					response.setResponse(HTTPStatus.OK, "slackOutput.html");
 					
 				} catch (MalformedURLException e) {
 					LogData.log.warning("MALFORMED URL");
@@ -59,8 +59,8 @@ public class ChatHandler extends HTML implements Handler {
 		else if(request.getRequestFullQuery() == null && request.getRequestType().equals("POST")) {
 			output = "POST but no query entered! No data to return...";
 			LogData.log.info(output);
-			setupHTML("output.html", output);
-			response.setResponse(HTTPStatus.OK, "output.html");
+			setupHTML("slackOutput.html", output);
+			response.setResponse(HTTPStatus.OK, "slackOutput.html");
 		}
 		else {
 			response.setResponse(HTTPStatus.OK, "slackbot.html");

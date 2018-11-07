@@ -16,7 +16,7 @@ public class Reviews extends Data {
 
 	@Override
 	public String toString() {
-		return "ASIN : " + getAsin() + "\n REVIEWER ID : " + reviewerID + "\n TEXT : " + reviewText + "\n SCORE : " + overall; 
+		return "ASIN : " + getAsin() + "\tREVIEWER ID : " + reviewerID + "\tTEXT : " + reviewText + "\tSCORE : " + overall; 
 	}
 
 }

@@ -15,18 +15,32 @@ public class HTML  {
 	 * @params fileToWrite, output
 	 */
 	public void setupHTML(String fileToWrite, String output) {
-	String[] lineByLine = output.split("\n\n");
+	String[] lineByLine;
 	String start = "<!doctype html><html><body><p>";
 	String end = "</p></body></html>";
+
 	try(FileWriter f = new FileWriter(fileToWrite);
 		BufferedWriter b = new BufferedWriter(f);) {
 			b.write(start);
-			for(String line : lineByLine) {
-				String[] objData = line.split("\n ");
-				for(String obj : objData ) {
-					b.write(obj + "<br />");
+			if(!fileToWrite.equals("slackOutput.html")) {
+				lineByLine = output.split("<<>>");
+				b.write("<p>" + lineByLine.length + "</p>");
+				String tableHead = "<h2>Results</h2><table style=\"width:100%\"><tr><th>#</th><th>ASIN</th><th>REVIEWER ID</th><th>TEXT</th><th>SCORE</th></tr>";
+				b.write(tableHead);
+				for(String line : lineByLine) {
+					String[] objData = line.split("\t");
+					b.write("<tr>");
+					for(String obj : objData) {
+						String data = obj.split(":")[1].trim();
+						b.write("<td>" + data + "</td>");
+					}
+					b.write("</tr>");
 				}
-				b.write("<br />");
+				b.write("</table>");
+				
+			}
+			else {
+				b.write(output);
 			}
 			b.write(end);	
 	} catch (IOException e) {
@@ -77,5 +91,4 @@ public class HTML  {
 			return true;
 		}
 	}
-
 }

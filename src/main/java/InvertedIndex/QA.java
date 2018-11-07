@@ -15,7 +15,7 @@ public class QA extends Data {
 	
 	@Override
 	public String toString() {
-		return "ASIN: " + getAsin() + "\n QUESTION : " + question + "\n ANSWER : " + answer; 
+		return "ASIN: " + getAsin() + "\tQUESTION : " + question + "\tANSWER : " + answer; 
 	}
 
 }

@@ -97,15 +97,15 @@ public class Processing {
 	public String getData(String operation, String term) {
 		term = term.replaceAll("[^A-Za-z0-9 ]", "").toLowerCase();
 		String output = "";
-		System.out.println(operation + '\t' + term.toUpperCase() + "####");
 		switch(operation) {
 			case "query":
 				output = i1.search(term);
 				break;
 			case "asin":
-				output = "~~~Records from Review objects~~~\n\n" + i1.findAsin(term.toUpperCase() + "\n\n") ;
-				output += "~~~Records from QA objects~~~\n\n" + i2.findAsin(term.toUpperCase() + "\n\n");
+				output = i1.findAsin(term.toUpperCase()) ;
+				output += i2.findAsin(term.toUpperCase() + "\n\n");
 		}
+		output = output.replaceAll("\n\n", "<<>>");
 			
 		return output;
 	}

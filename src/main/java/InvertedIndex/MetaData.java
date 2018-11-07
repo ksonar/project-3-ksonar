@@ -19,7 +19,7 @@ public class MetaData implements Comparable {
 	
 	@Override
 	public String toString() {
-		return objData + "\n Count : " + countOfWord;
+		return objData.toString();
 	}
 
 	/*

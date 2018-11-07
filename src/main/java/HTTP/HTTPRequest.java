@@ -20,8 +20,6 @@ public class HTTPRequest {
 	private String msg;
 
 	public HTTPRequest(String line, InputStream in, Socket connection) throws IOException {
-		System.out.println("LINE FROM WITHIN REQUEST : " + line);
-
 		setRequest(line);
 		setRequestHeaders(line, in, connection);
 	}
