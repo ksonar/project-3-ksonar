@@ -1,4 +1,4 @@
-Project 3 - HTTP Server
+# Project-3-Web-Server
 ### Due - Wednesday, November 7, 2018 - 11am
 
 For this project, you will implement an HTTP server, two web applications, and a full suite of tests. You will practice using the following:
