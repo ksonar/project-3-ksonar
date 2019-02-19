@@ -1,8 +1,4 @@
 Project 3 - HTTP Server
-=======================================
-1. 8080 - InvertedIndex
-2. 9090 - Slack  
-=======================================
 ### Due - Wednesday, November 7, 2018 - 11am
 
 For this project, you will implement an HTTP server, two web applications, and a full suite of tests. You will practice using the following:
